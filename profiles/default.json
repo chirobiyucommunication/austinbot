@@ -1,0 +1,70 @@
+{
+  "trade_capital": 100.0,
+  "target_profit": 500.0,
+  "trade_amount": 100.0,
+  "stack_method": "mart",
+  "time_period": "S15",
+  "martingale_percent": 2.0,
+  "martingale_limit": 1,
+  "disable_martingale": false,
+  "mode": "oscillate",
+  "slide_direction": "sell",
+  "payout_rate": 0.82,
+  "enabled_pairs": [
+    "EURUSD_otc",
+    "GBPUSD_otc"
+  ],
+  "pair_expiry_rules": {
+    "EURUSD_otc": [
+      "S5",
+      "S10",
+      "S15",
+      "S30",
+      "M1",
+      "M2",
+      "M5"
+    ],
+    "GBPUSD_otc": [
+      "S5",
+      "S10",
+      "S15",
+      "S30",
+      "M1",
+      "M2"
+    ],
+    "USDJPY_otc": [
+      "S5",
+      "S10",
+      "S15",
+      "S30",
+      "M1"
+    ],
+    "AUDUSD_otc": [
+      "S5",
+      "S10",
+      "S15",
+      "M1"
+    ]
+  },
+  "schedule_enabled": false,
+  "schedule_start_hour": 0,
+  "schedule_end_hour": 23,
+  "execution_mode": "broker_plugin",
+  "broker_dry_run": false,
+  "auto_open_broker_on_start": true,
+  "auto_execute_signals": true,
+  "pocket_option_url": "https://pocketoption.com/en/cabinet/demo-quick-high-low/",
+  "broker_selectors": {
+    "amount_input": "input[type='text'][autocomplete='off']",
+    "buy_button": "xpath=//span[contains(@class,'switch-state-block__item')][.//span[contains(@class,'payout__text') and normalize-space()='Buy']]",
+    "sell_button": "xpath=//span[contains(@class,'switch-state-block__item')][.//span[contains(@class,'payout__text') and normalize-space()='Sell']]",
+    "pair_dropdown": ".current-symbol",
+    "pair_search": "input[type='search']",
+    "pair_item": "[data-symbol='{pair}']",
+    "expiry_dropdown": ".expiration-select",
+    "expiry_item": "[data-expiration='{expiry}']",
+    "expiry_value": "div.value__val",
+    "expiry_minute_input": "xpath=(//input[@type='text' and @autocomplete='off'])[last()-1]",
+    "expiry_second_input": "xpath=(//input[@type='text' and @autocomplete='off'])[last()]"
+  }
+}

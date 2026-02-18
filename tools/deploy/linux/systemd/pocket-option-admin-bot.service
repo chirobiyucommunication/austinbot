@@ -1,0 +1,17 @@
+[Unit]
+Description=Pocket Option Telegram Admin Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__BOT_USER__
+WorkingDirectory=__REPO_ROOT__
+Environment=PYTHONPATH=src
+EnvironmentFile=/etc/pocket-option-bot/bot.env
+ExecStart=__REPO_ROOT__/.venv/bin/python tools/licensing/telegram_admin_bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

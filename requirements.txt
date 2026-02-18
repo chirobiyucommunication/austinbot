@@ -1,0 +1,5 @@
+selenium==4.28.1
+webdriver-manager==4.0.2
+cryptography==44.0.1
+python-telegram-bot==21.10
+

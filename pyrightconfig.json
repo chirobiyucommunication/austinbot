@@ -1,0 +1,19 @@
+{
+  "include": [
+    "src",
+    "tools"
+  ],
+  "extraPaths": [
+    "src"
+  ],
+  "venvPath": ".",
+  "reportMissingImports": true,
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "src"
+      ]
+    }
+  ]
+}

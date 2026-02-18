@@ -1,0 +1,26 @@
+.env
+__pycache__/
+*.pyc
+
+# Python virtual envs
+.venv/
+venv/
+
+# Build/output artifacts
+build/
+dist/
+*.spec
+
+# Runtime/license local files
+licenses/license.json
+licenses/private_key.pem
+licenses/public_key.pem
+licenses/activation_requests.json
+licenses/client_registry.json
+data/browser_profile/
+data/*.db
+
+# Editor/system
+.vscode/
+.DS_Store
+Thumbs.db
