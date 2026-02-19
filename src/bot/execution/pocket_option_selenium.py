@@ -88,14 +88,7 @@ class PocketOptionSeleniumAdapter(BrokerAdapter):
             try:
                 self._set_expiry(driver, signal.expiry)
             except Exception as exc:
-                return ExecutionResult(
-                    accepted=False,
-                    message=f"Broker plugin execution failed: expiry not applied ({exc})",
-                    pair=signal.pair,
-                    direction=signal.direction,
-                    expiry=signal.expiry,
-                    executed_at=datetime.utcnow(),
-                )
+                preparation_warnings.append(f"expiry: {exc}")
 
             self._click_direction(driver, signal.direction)
 
