@@ -4,8 +4,7 @@ import shutil
 import sys
 import time
 import tkinter as tk
-import webbrowser
-from tkinter import messagebox, ttk
+from tkinter import ttk
 
 from bot.core.controller import BotController
 from bot.core.models import ExecutionMode
@@ -45,27 +44,6 @@ def _bootstrap_runtime_workspace(install_root: Path, workspace_root: Path) -> No
             pass
 
 
-def _license_error_details(controller: BotController) -> str:
-    validator = controller.license_validator
-    reason = controller.last_license_validation.reason if controller.last_license_validation else "Unknown"
-    telegram_bot_username = os.getenv("TELEGRAM_ACTIVATION_BOT", "austinpaymentbot").strip().lstrip("@")
-    telegram_help = ""
-    if telegram_bot_username:
-        telegram_help = (
-            "\n\nTelegram activation:\n"
-            f"1) Open https://t.me/{telegram_bot_username}\n"
-            f"2) Send: /activate_request {controller.device_id()}\n"
-            "3) Complete payment and wait for admin activation."
-        )
-    return (
-        f"License invalid: {reason}\n\n"
-        f"Device ID: {controller.device_id()}\n"
-        f"Expected license file: {validator.license_path}\n"
-        f"Expected public key: {validator.public_key_path}"
-        f"{telegram_help}"
-    )
-
-
 def _set_loading(progress_var: tk.DoubleVar, status_var: tk.StringVar, value: float, text: str, splash: tk.Tk) -> None:
     progress_var.set(max(0.0, min(100.0, value)))
     status_var.set(f"{text} ({int(progress_var.get())}%)")
@@ -92,22 +70,6 @@ def _launch_with_splash(project_root: Path) -> BotController | None:
 
     _set_loading(progress_var, status_var, 10, "Initializing bot", splash)
     controller = BotController(project_root)
-
-    _set_loading(progress_var, status_var, 20, "Checking license", splash)
-    license_result = controller.license_validator.validate()
-    controller.last_license_validation = license_result
-    if not license_result.valid:
-        activation_url = controller.activation_bot_url()
-        if activation_url:
-            try:
-                webbrowser.open(activation_url)
-            except Exception:
-                pass
-        _set_loading(progress_var, status_var, 100, f"License invalid: {license_result.reason}", splash)
-        messagebox.showerror("License Invalid", _license_error_details(controller), parent=splash)
-        time.sleep(0.2)
-        splash.destroy()
-        return controller
 
     if controller.settings.execution_mode != ExecutionMode.BROKER_PLUGIN:
         _set_loading(progress_var, status_var, 100, "Launch complete", splash)

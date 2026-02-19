@@ -16,7 +16,7 @@ from bot.core.strategy_engine import StrategyEngine
 from bot.execution.factory import build_adapter
 from bot.execution.pocket_option_selenium import PocketOptionSeleniumAdapter
 from bot.licensing.device import get_device_model
-from bot.licensing.validator import LicenseValidationResult, LicenseValidator
+from bot.licensing.validator import LicenseValidator
 from bot.storage.journal import Journal
 
 
@@ -33,7 +33,7 @@ class BotController:
         self.journal = Journal(self.project_root / "data" / "journal.db")
         self.last_signal: TradeSignal | None = None
         self.last_execution_message = "none"
-        self.last_license_validation: LicenseValidationResult | None = None
+        self.last_license_validation = None
         self._auto_trade_thread: threading.Thread | None = None
         self._auto_trade_running = False
         self._oscillate_next_direction = SlideDirection.BUY
@@ -61,11 +61,6 @@ class BotController:
             self.execution_adapter = build_adapter(self.settings)
 
     def start(self) -> str:
-        license_check = self.license_validator.validate()
-        self.last_license_validation = license_check
-        if not license_check.valid:
-            return self.license_activation_message(license_check.reason)
-
         self.session.start()
         self._next_trade_at = 0.0
         self._broker_start_balance = None
@@ -249,10 +244,7 @@ class BotController:
         return " | ".join(parts)
 
     def recheck_license(self) -> str:
-        self.last_license_validation = self.license_validator.validate()
-        if self.last_license_validation.valid:
-            return f"License valid (expires: {self.last_license_validation.expires_at})"
-        return self.license_activation_message(self.last_license_validation.reason)
+        return "License check disabled"
 
     def status_text(self) -> str:
         stats = self.session.stats
@@ -268,15 +260,8 @@ class BotController:
             if self.settings.schedule_enabled
             else "disabled"
         )
-        if self.last_license_validation is None:
-            license_text = "not-checked"
-        elif self.last_license_validation.valid:
-            license_text = f"valid (exp: {self.last_license_validation.expires_at})"
-        else:
-            license_text = f"invalid ({self.last_license_validation.reason})"
         return (
             f"State: {stats.state.value}\\n"
-            f"License: {license_text}\\n"
             f"Profit: {stats.session_profit}\\n"
             f"Target remaining: {target_remaining}\\n"
             f"Trades: {stats.trades_taken} | Wins: {stats.wins} | Losses: {stats.losses}\\n"
