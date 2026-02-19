@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import json
 import os
+import threading
+import time
 from pathlib import Path
 import tkinter as tk
 import urllib.request
-import webbrowser
 from tkinter import font, messagebox
 
 from bot.core.controller import BotController
-from bot.core.models import BotMode, BotSettings, SlideDirection
+from bot.core.models import BotMode, BotSettings, ExecutionMode, SlideDirection
 
 
 class BotApp:
@@ -56,6 +57,7 @@ class BotApp:
         self.mode_var.trace_add("write", lambda *_: self._render_primary_action_buttons())
         self._schedule_status_refresh()
         self._schedule_announcement_refresh()
+        self.root.after(500, self._open_pocket_option_on_launch)
 
     def _announcement_state_path(self) -> Path:
         return self.controller.project_root / "data" / "announcement_seen.txt"
@@ -357,21 +359,6 @@ class BotApp:
             pady=3,
         ).pack(pady=(6, 0))
 
-        tk.Button(
-            tools_row,
-            text="Check License",
-            command=self._check_license,
-            bg=self.color_input,
-            fg=self.color_text,
-            activebackground=self.color_panel,
-            activeforeground=self.color_text,
-            relief="flat",
-            bd=0,
-            cursor="hand2",
-            padx=8,
-            pady=3,
-        ).pack(pady=(6, 0))
-
         link_font = font.Font(family="Segoe UI", size=9, underline=True)
         link = tk.Label(
             parent,
@@ -470,8 +457,28 @@ class BotApp:
         self._save_settings()
         result = self.controller.start()
         self.status_var.set(result)
-        if result.startswith("License invalid:"):
-            self._open_activation_bot()
+
+    def _open_pocket_option_on_launch(self) -> None:
+        if self.controller.settings.execution_mode != ExecutionMode.BROKER_PLUGIN:
+            return
+
+        def _worker() -> None:
+            last_message = ""
+            for _ in range(3):
+                try:
+                    message = self.controller.open_broker_session()
+                    last_message = message or ""
+                    if message and not message.lower().startswith("failed") and "not installed" not in message.lower():
+                        self.root.after(0, lambda msg=message: self.status_var.set(msg))
+                        return
+                except Exception as exc:
+                    last_message = f"Failed to open Pocket Option: {exc}"
+                time.sleep(1.0)
+
+            if last_message:
+                self.root.after(0, lambda msg=last_message: self.status_var.set(msg))
+
+        threading.Thread(target=_worker, daemon=True).start()
 
     def _start_call(self) -> None:
         self.slide_direction_var.set(SlideDirection.BUY.value)
@@ -569,34 +576,6 @@ class BotApp:
             self.status_var.set("Device ID copied")
         except Exception as exc:
             self.status_var.set(f"Copy failed: {exc}")
-
-    def _check_license(self) -> None:
-        try:
-            message = self.controller.recheck_license()
-            self.status_var.set(message)
-            if message.startswith("License invalid:"):
-                self._open_activation_bot()
-                messagebox.showwarning("License Status", message)
-            else:
-                messagebox.showinfo("License Status", message)
-        except Exception as exc:
-            self.status_var.set(f"License check failed: {exc}")
-
-    def _open_activation_bot(self) -> None:
-        activation_url = self.controller.activation_bot_url()
-        if not activation_url:
-            messagebox.showwarning(
-                "Activation Bot",
-                "Telegram activation bot is not configured. Set TELEGRAM_ACTIVATION_BOT env var.",
-            )
-            return
-        try:
-            webbrowser.open(activation_url)
-            self.status_var.set(
-                f"Opened activation bot | Device linked: {self.controller.device_id()}"
-            )
-        except Exception as exc:
-            self.status_var.set(f"Failed to open activation bot: {exc}")
 
     def _toggle_topmost(self) -> None:
         self.root.attributes("-topmost", self.pin_window_var.get())

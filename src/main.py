@@ -71,38 +71,12 @@ def _launch_with_splash(project_root: Path) -> BotController | None:
     _set_loading(progress_var, status_var, 10, "Initializing bot", splash)
     controller = BotController(project_root)
 
-    if controller.settings.execution_mode != ExecutionMode.BROKER_PLUGIN:
-        _set_loading(progress_var, status_var, 100, "Launch complete", splash)
-        time.sleep(0.2)
-        splash.destroy()
-        return controller
-
-    _set_loading(progress_var, status_var, 30, "Launching browser", splash)
-    open_msg = controller.open_broker_session()
-    if open_msg.lower().startswith("failed") or "not installed" in open_msg.lower():
-        _set_loading(progress_var, status_var, 100, open_msg, splash)
-        time.sleep(1.5)
-        splash.destroy()
-        return None
-
-    _set_loading(progress_var, status_var, 45, "Opening Pocket Option site", splash)
-
-    pulse = 45
-    while True:
-        try:
-            splash.update()
-        except tk.TclError:
-            return None
-
-        if controller.is_broker_logged_in():
-            _set_loading(progress_var, status_var, 100, "Pocket Option logged in", splash)
-            time.sleep(0.35)
-            splash.destroy()
-            return controller
-
-        pulse = 46 + ((pulse - 45 + 2) % 49)
-        _set_loading(progress_var, status_var, pulse, "Waiting for Pocket Option login", splash)
-        time.sleep(0.5)
+    if controller.settings.execution_mode == ExecutionMode.BROKER_PLUGIN:
+        _set_loading(progress_var, status_var, 70, "Preparing Pocket Option", splash)
+    _set_loading(progress_var, status_var, 100, "Launch complete", splash)
+    time.sleep(0.2)
+    splash.destroy()
+    return controller
 
 
 def main() -> None:
