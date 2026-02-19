@@ -334,6 +334,11 @@ class BotController:
                     time.sleep(0.5)
                     continue
 
+                if not self.is_broker_logged_in():
+                    self.last_execution_message = "Waiting for Pocket Option login..."
+                    time.sleep(1.0)
+                    continue
+
                 if self._check_broker_take_profit():
                     continue
 
@@ -354,8 +359,20 @@ class BotController:
                 )
                 self.last_signal = signal
                 self.journal.log_signal(signal)
-                self.last_execution_message = self.execute_last_signal()
-                self._next_trade_at = time.monotonic() + self._trade_cooldown_seconds
+                result_message = self.execute_last_signal()
+                self.last_execution_message = result_message
+
+                normalized = (result_message or "").lower()
+                if (
+                    "execution failed" in normalized
+                    or "unable to set" in normalized
+                    or "not applied" in normalized
+                    or "cannot execute" in normalized
+                    or "selenium" in normalized and "not installed" in normalized
+                ):
+                    self._next_trade_at = time.monotonic() + 5.0
+                else:
+                    self._next_trade_at = time.monotonic() + self._trade_cooldown_seconds
             except Exception as exc:
                 self.last_execution_message = f"Auto loop error: {exc}"
             finally:
