@@ -128,9 +128,7 @@ class PocketOptionSeleniumAdapter(BrokerAdapter):
         if self._driver is not None:
             return self._driver
 
-        project_root = Path(__file__).resolve().parents[3]
-        browser_profile_dir = project_root / "data" / "browser_profile"
-        browser_profile_dir.mkdir(parents=True, exist_ok=True)
+        browser_profile_dir = self._browser_profile_dir()
 
         options = ChromeOptions()
         options.add_experimental_option("excludeSwitches", ["enable-logging", "enable-automation"])
@@ -141,13 +139,34 @@ class PocketOptionSeleniumAdapter(BrokerAdapter):
         options.add_argument("--no-first-run")
         options.add_argument("--log-level=3")
         options.add_argument("--start-maximized")
-        options.add_argument(f"--user-data-dir={browser_profile_dir}")
-        options.add_argument("--profile-directory=Default")
+        if browser_profile_dir is not None:
+            options.add_argument(f"--user-data-dir={browser_profile_dir}")
+            options.add_argument("--profile-directory=Default")
         service = Service(log_output=subprocess.DEVNULL)
         service.creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         os.environ["WDM_LOG"] = "0"
         self._driver = webdriver.Chrome(service=service, options=options)
         return self._driver
+
+    def _browser_profile_dir(self) -> Path | None:
+        local_appdata = os.getenv("LOCALAPPDATA", "").strip()
+        if local_appdata:
+            preferred = Path(local_appdata) / "PocketOptionBot" / "data" / "browser_profile"
+        else:
+            preferred = Path.home() / "AppData" / "Local" / "PocketOptionBot" / "data" / "browser_profile"
+
+        try:
+            preferred.mkdir(parents=True, exist_ok=True)
+            return preferred
+        except Exception:
+            pass
+
+        try:
+            fallback = Path.home() / "PocketOptionBot" / "browser_profile"
+            fallback.mkdir(parents=True, exist_ok=True)
+            return fallback
+        except Exception:
+            return None
 
     def open_session(self) -> str:
         if webdriver is None:
